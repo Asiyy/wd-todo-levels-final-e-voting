@@ -1,68 +1,94 @@
 const express = require("express");
 const app = express();
+var csrf = require("tiny-csrf");
 const { Todo } = require("./models");
 const bodyParser = require("body-parser");
-const path = require("path");
-const { response } = require("express");
-
 app.use(bodyParser.json());
-app.set("view engine", "ejs");
-app.use(express.static(path.join(__dirname + "/public")));
-// app.use(express.static("public"));  
+app.use(express.urlencoded({extended:false}));
+var cookieParser=require("cookie-parser");
 
-app.get("/", async (req, res) => {
+app.use(cookieParser("ssh! some secret string"));
+app.use(csrf("this_should_be_32_character_long", ["POST", "PUT", "DELETE"]));
+
+
+app.set("view engine","ejs");
+const path = require('path');
+
+
+
+app.use(express.static(path.join(__dirname,"public")));
+
+
+app.get("/",async  function (request, response) {
   const allTodos = await Todo.getTodos();
-  if (req.accepts("html")) {
-    res.render("index", {
-      allTodos,
+  const overdue = await Todo.overdue();
+  const dueToday = await Todo.dueToday();
+  const dueLater = await Todo.dueLater();
+ const completed = await Todo.completed();
+  if (request.accepts("html")) {
+    response.render("index", {
+      title: "Todo application",
+      overdue,
+      dueToday,
+      dueLater,
+      completed,
+      csrfToken: request.csrfToken(),
     });
-  } else {
-    res.json(allTodos);
+  }
+  else{
+    response.json({
+      overdue,
+      dueToday,
+      dueLater,
+      completed,
+    })
   }
 });
 
-app.get("/todos", async (req, res) => {
-  try {
-    const todos = await Todo.findAll({ order: [["id", "ASC"]] });
-    return res.json(todos);
-  } catch (error) {
-    console.log(error);
-    return res.status(422).json(error);
-  }
-});
 
-app.post("/todos", async (req, res) => {
-  console.log("Body : ", req.body);
+app.get("/todos/:id", async function (request, response) {
   try {
-    const todo = await Todo.addTodo({
-      title: req.body.title,
-      dueDate: req.body.dueDate,
-      completed: false,
-    });
-    return res.json(todo);
+    const todo = await Todo.findByPk(request.params.id);
+    return response.json(todo);
   } catch (error) {
     console.log(error);
     return response.status(422).json(error);
   }
 });
 
-app.put("/todos/:id/markAsCompleted", async (req, res) => {
-  console.log("Todo marks completed : ", req.params.id);
-  const todo = await Todo.findByPk(req.params.id);
+app.post("/todos", async (request, response)=> {
   try {
-    const updateTodo = await todo.markAsCompleted();
-    return res.json(updateTodo);
+    await Todo.addTodo({
+      title:request.body.title,
+      dueDate:request.body.dueDate,
+    });
+    return response.redirect("/");
   } catch (error) {
     console.log(error);
     return response.status(422).json(error);
   }
 });
 
-// eslint-disable-next-line no-unused-vars
-app.delete("/todos/:id", async (req, res) => {
-  console.log("We have to delete a Todo with ID: ", req.params.id);
-  const affectedRow = await Todo.destroy({ where: { id: req.params.id } });
-  res.send(affectedRow ? true : false);
+app.put("/todos/:id", async (request, response) => {
+  const todo = await Todo.findByPk(request.params.id);
+  try {
+    const updatedTodo = await todo.setCompletionStatus(request.body.completed);
+    return response.json(updatedTodo);
+  } catch (error) {
+    console.log(error);
+    return response.status(422).json(error);
+  }
+});
+
+app.delete("/todos/:id", async (request, response) =>{
+  try{
+    await Todo.remove(request.params.id);
+    return response.json(true);
+  }
+  catch (error) {
+    console.log(error);
+    return response.status(422).json(error);
+  }
 });
 
 module.exports = app;
