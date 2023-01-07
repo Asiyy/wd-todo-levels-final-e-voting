@@ -1,4 +1,10 @@
 body {
-  background-color: rgb(211, 211, 211);
-  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
-}
+    font-family:Arial, Helvetica, sans-serif;
+    background: rgb(37, 207, 71);
+    border: 2px solid red;
+    }
+    
+    .Todo-Item:hover .trash-icon{
+      display:block;
+    }
+    
