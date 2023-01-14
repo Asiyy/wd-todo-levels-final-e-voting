@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<%= csrfToken %>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+        function deleteOption(optionID) {
+            fetch(`/options/${optionID}`, {
+                method: "delete",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({
+                    "_csrf":token
+                })
+            }).then((res)=>{
+                if (res.ok) {
+                    window.location.reload();
+                }
+            }).catch((err)=> console.error(err))
+        }
+    </script>
+    <link rel="stylesheet" href="./css/style.css">
+    <title><%= title %></title>
+</head>
+<body class="bg-lime-100">
+    <div class="flex gap-1 mx-10 mt-6 bg-lime-100">
+        
+        <a href="/elections" class="text-purple-800 hover:text-purple-600">All Elections</a>
+        <span>></span>
+        <a href="/elections/<%= id %>/" class="text-purple-800 hover:text-purple-600">Election</a>
+        <span>></span>
+        <a href="/elections/<%= id %>/questions" class="text-purple-800 hover:text-purple-600">Questions</a>
+    </div>
+    <div class="grid grid-cols-5">
+        <div class="col-start-2 col-span-3">
+            <div>
+                <% if (messages && messages.error && messages.error.length > 0) { %>
+                    <% for(var i=0; i<messages.error.length; i++) { %>
+                        <p class="bg-red-100 my-3 list-none rounded px-4 py-2"><%= messages.error[i] %></p>
+                    <% } %>
+                <% } %>
+            </div>
+            <div class="px-2 py-1">
+                <p></p>
+            </div>
+            <div>
+                <div>            
+                    <p class="py-2 text-2xl text-black px-5">QUESTION</p>               
+                        <p class="py-2 px-10 text-2xl text-black">-<%= title %></p>                    
+                </div>
+            </div>
+            <div>
+                <div>            
+                    <p class="py-2 text-2xl text-black px-5">Description</p>   
+                    <p class="py-2 px-10 text-1xl text-black">-<%= description %></p>   
+                                     
+                </div>
+            </div>
+            <div>
+                <div>            
+                    <p class="py-2 text-2xl text-black px-5">Options Available are <%= options.length %></p>    
+                                     
+                </div>
+            </div>
+           
+                
+            <div class="ml-12">
+                <ol class="list-decimal">
+                    <% for(let i=0; i<options.length; i++) { %>
+                        <li class="option-item">
+                            <div class="flex justify-between items-center w-full my-2 px-2 py-1 rounded-lg bg-white-50">
+                                <p class="ml-2 text-lg "><%= options[i].option %></p>
+                                <div class="flex gap-2 text-purple-800">
+                                <div class="rounded w-fit px-2 py-1 flex gap-2 cursor-pointer hover:text-purple-600">
+                                    <button class="bg-transparent hover:bg-yellow-400 text-yellow-600 font-semibold hover:text-white py-2 px-4 border border-yellow-500 hover:border-transparent rounded">
+                                        <a href="/elections/<%= id %>/questions/<%= questionID %>/options/<%= options[i].id %>/edit" class="text-sm">Edit option</a>
+                                      </button>                                                                        
+                                   
+                                </div>
+                                <div class="rounded w-fit px-2 py-1 flex gap-2 cursor-pointer hover:text-purple-600">
+                                    <button class="bg-transparent hover:bg-red-400 text-red-600 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded">
+                                        <a onclick="deleteOption(<%= options[i].id %>)" class="text-sm">Delete option</a>
+                                      </button>                                  
+                                </div>
+                                </div>
+                            </div>
+                        </li>
+                    <% } %>
+                </ol>
+            </div>
+            <form action="/elections/<%= id %>/questions/<%= questionID %>" method="post">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                <div class="flex gap-2 py-4">
+                    <div class="flex-auto">
+                        <input type="text" name="option" placeholder="Enter an answer option" class="border border-gray-300 text-gray-900 w-full rounded p-2 text-sm" required />
+                    </div>
+                </div>
+                <div class="flex-none">
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" type="submit">
+                        Add Answer Option
+                      </button>
+                </div>
+            </form>
+            <p class="text-red-600"><%= (options.length==0)?"No Options have been added kindly do add options":"" %></p>
+        </div>
+    </div>
+</body>
+</html>

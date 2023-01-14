@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="csrf-token" content="<%= csrfToken %>">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        var token = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+        function deleteQuestion({electionID, questionID}) {
+            fetch(`/elections/${electionID}/questions/${questionID}`, {
+                method: "delete",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({
+                    "_csrf":token
+                })
+            }).then((res)=>{
+                if (res.ok) {
+                    window.location.reload();
+                }
+            }).catch((err)=> console.error(err))
+        }
+    </script>
+    <title><%= title %></title>
+</head>
+<body class="bg-lime-100">
+    <div class="flex gap-1 mx-10 mt-6 bg-lime-50">
+        
+        <a href="/elections" class="text-purple-800 hover:text-purple-600">All Elections</a>
+        <span>></span>
+        <a href="/elections/<%= id %>/" class="text-purple-800 hover:text-purple-600">Election</a>
+    </div>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <div class="my-6 mx-10">
+        <div class="flex gap-2 py-4 justify-between">
+            <h5 class="text-2xl"><%= title %> - Questions</h5>
+            <div class="bg-black rounded w-fit px-2 py-1 hover:bg-black">
+                <button class="bg-black-500 hover:bg-black-400 text-white font-bold py-2 px-4 border-b-4 border-black-700 hover:border-black-500 rounded">
+                    <a href="/elections/<%= id %>/questions/create">Add New Question</a>
+                  </button>
+            </div>
+        </div>
+        <div class="flex-auto">
+            <div class="mx-4">  
+                <p class="text-purple-600"><%= (questions.length==0)?"You haven't added any questions yet!":"" %></p>
+                <div class="grid grid-cols-8 gap-35  text-orange-400 ">
+                    <div class="col-span-2  px-3">            
+                        <p class="py-2 text-2xl">Question</p>   
+                                         
+                    </div>
+                    <div class="col-span-3 ">            
+                        <p class="py-2 px-10 text-2xl">Description</p>   
+                                         
+                    </div>
+                    <div class="col-span-1 ">            
+                        <p class="py-2 px-10 text-2xl">Action</p>   
+                                         
+                    </div>
+                </div>
+
+                <ol class="list-decimal">
+                    <% for (let i=0; i<questions.length; i++) { %>
+                        <li>
+                            <div class="flex justify-between items-center w-full my-2 px-2 py-1 rounded ">
+                                <div>
+                                    <a href="/elections/<%= id %>/questions/<%= questions[i].id %>" class="my-2 text-lg text-purple-600 "><%= questions[i].question %></a>
+                                </div>
+                                <div>                                    
+                                    <p class="text-purple-800 text-md my-2"><%= questions[i].description %></p>
+                                </div>
+                                <div class="flex gap-2 text-purple-800">
+                                    <div class="rounded w-fit px-2 py-1 flex gap-2 cursor-pointer hover:text-purple-600">
+                                        <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
+                                            <a href="/elections/<%= id %>/questions/<%= questions[i].id %>/edit" class="text-sm">Edit question</a>
+                                          </button>                                                                        
+                                    </div>
+                                    <% if ((questions.length) > 1) { %>
+                                    <div class="rounded w-fit px-2 py-1 flex gap-2 cursor-pointer hover:text-purple-600">
+                                        <button class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
+                                            <a onclick="deleteQuestion({electionID: <%= id %>, questionID: <%= questions[i].id %>})" class="text-sm">Delete question</a>
+                                          </button>               
+                                    </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </li>
+                    <% } %>
+                </ol>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
